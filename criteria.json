@@ -1,0 +1,6 @@
+{
+	"criteria": {
+		"energy_level": ["low", "medium", "high"],
+		"size": ["small", "medium"]
+	}
+}
