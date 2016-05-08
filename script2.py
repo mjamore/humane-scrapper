@@ -19,7 +19,6 @@ absolute_details_links3 = []
 current_names = []
 current_links = []
 json_string = '{'
-counter = 0
 log_text = str(datetime.now()) + '\n'
 FROM = credentials.username
 TO = [credentials.username2]
@@ -83,7 +82,7 @@ for index, link in enumerate(absolute_details_links3):
 	images = images + images2
 	# print images
 
-	json_string += '"dog": {"Images": ['
+	json_string += '"dogs": {"Images": ['
 	for i, image in enumerate(images):
 		if i == len(images) - 1:
 			# on the last iteration, don't include the comma
@@ -141,6 +140,7 @@ json_string += '}'
 print json_string
 
 current_names2 = []
+json_object = json.loads(json_string)
 # if any of the current names are not in the dogs_names.json file, rewrite files
 for current_name in current_names:
 	# print current_name
@@ -155,28 +155,26 @@ for current_name in current_names:
 		with open('dogs_data.json', 'w') as file2:
 			file2.write(json_string.encode('utf-8').strip())
 		current_names2.append(current_name)
-	else:
-		counter += 1
+		# if json_object['dogs']['Name'] == current_name:
+		# 	print current_name
 
 with open("dogs_names.txt", "r") as dogs_names_file3:
 	dogs_names3 = dogs_names_file3.readlines()
 
-# print counter
-# print len(dogs_names3)
-# if we looped through all new dogs and none of them are in the dogs_names.json file
-if counter == len(dogs_names3):
+print current_names2
+print current_links
+
+if len(current_names2) > 0:
+	log_text += "Updated file with the following URL's:\n"
+else:
 	log_text += 'There have not been any new dogs added that meet the specified criteria.\n'
 
-for name in current_names2:
-	# print name
-	# print current_names2
-	if name not in current_names2:
-		log_text += "Updated file with the following URL's:\n"
-		for link in current_links:
+for index, name in enumerate(current_names2):
+	print name
+	for link in current_links:
+		if name in link:
+			print link
 			log_text += link + '\n'
-	else:
-		log_text += 'There have not been any new dogs added that meet the specified criteria.\n'
-	break
 
 log_text += '----------------------------------\n'
 log_text += '\n'
