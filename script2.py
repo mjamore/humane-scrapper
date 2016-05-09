@@ -8,6 +8,7 @@ import urllib2
 import json
 import smtplib
 import credentials
+import functions
 
 page = requests.get("https://www.chittendenhumane.org/Dogs")
 tree = html.fromstring(page.content)
@@ -18,7 +19,7 @@ absolute_details_links2 = []
 absolute_details_links3 = []
 current_names = []
 current_links = []
-json_string = '{'
+json_string = '{"dogs":['
 log_text = str(datetime.now()) + '\n'
 FROM = credentials.username
 TO = [credentials.username2]
@@ -67,7 +68,7 @@ for link in absolute_details_links2:
 			if size in json_size:
 				absolute_details_links3.append(link)
 
-print absolute_details_links3
+# print absolute_details_links3
 
 for index, link in enumerate(absolute_details_links3):
 	# print link
@@ -82,7 +83,7 @@ for index, link in enumerate(absolute_details_links3):
 	images = images + images2
 	# print images
 
-	json_string += '"dogs": {"Images": ['
+	json_string += '{"Images:": ['
 	for i, image in enumerate(images):
 		if i == len(images) - 1:
 			# on the last iteration, don't include the comma
@@ -97,16 +98,15 @@ for index, link in enumerate(absolute_details_links3):
 	name = tree.xpath('//div[@class="blog"]/h2/text()')
 	current_names.append(name[0])
 
-	json_string += '"Name":"' + name[0] + '",'
+	json_string += '"Name:":"' + name[0] + '",'
 
 
 	# get the keys for each ...
 	details_keys = tree.xpath('//div[@class="blogPostContent"]/p[1]/b/text()')
 	temp_keys = tree.xpath('//div[@class="blogPostContent"]/p[1]/span/b/text()')
 	temp_keys.pop()
-	print temp_keys
 	details_keys = details_keys + temp_keys
-	print details_keys
+	# print details_keys
 
 	# get the values for each ...
 	details_values = tree.xpath('//div[@class="blogPostContent"]/p[1]/text()')
@@ -115,7 +115,7 @@ for index, link in enumerate(absolute_details_links3):
 	details_values = [element.strip() for element in details_values]
 	temp_value = tree.xpath('//div[@class="blogPostContent"]/p[1]/span/span/text()')
 	details_values = details_values + temp_value
-	print details_values
+	# print details_values
 
 	for i in range(0,len(details_keys)):
 		json_string += '"' + details_keys[i] + '":'
@@ -125,10 +125,10 @@ for index, link in enumerate(absolute_details_links3):
 	# get the description for each dog
 	description = tree.xpath('//div[@class="blogPostContent"]/p[2]/text()')
 
-	json_string += '"Description":"' + description[0] + '",'
+	json_string += '"Description:":"' + description[0] + '",'
 
 	current_links.append(link)
-	json_string += '"Link":"' + link + '"'
+	json_string += '"Link:":"' + link + '"'
 
 	if index == len(absolute_details_links3) - 1:
 		json_string += '}'
@@ -136,11 +136,10 @@ for index, link in enumerate(absolute_details_links3):
 		json_string += '},'
 
 
-json_string += '}'
-print json_string
+json_string += ']}'
+# print json_string
 
 current_names2 = []
-json_object = json.loads(json_string)
 # if any of the current names are not in the dogs_names.json file, rewrite files
 for current_name in current_names:
 	# print current_name
@@ -155,14 +154,10 @@ for current_name in current_names:
 		with open('dogs_data.json', 'w') as file2:
 			file2.write(json_string.encode('utf-8').strip())
 		current_names2.append(current_name)
-		# if json_object['dogs']['Name'] == current_name:
-		# 	print current_name
 
 with open("dogs_names.txt", "r") as dogs_names_file3:
 	dogs_names3 = dogs_names_file3.readlines()
 
-print current_names2
-print current_links
 
 if len(current_names2) > 0:
 	log_text += "Updated file with the following URL's:\n"
@@ -182,22 +177,25 @@ log_text += '\n'
 with open('log.txt', 'a') as file3:
 	file3.write(log_text)
 
+html = functions.build_html(json_string)
+print html
+
 # send email
-# TEXT = json_string.encode('utf-8').strip()
-# message = """\
-# From: %s
-# To: %s
-# Subject: %s
+TEXT += json_string.encode('utf-8').strip()
+message = """\
+From: %s
+To: %s
+Subject: %s
 
-# %s
-# """ % (FROM, ", ".join(TO), SUBJECT, TEXT)
+%s
+""" % (FROM, ", ".join(TO), SUBJECT, TEXT)
 
-# try:
-# 	server = smtplib.SMTP_SSL('smtp.gmail.com', 465)
-# 	server.ehlo()
-# 	server.login(credentials.username, credentials.password)
-# 	server.sendmail(FROM, TO, message)
-# 	server.close()
-# 	print 'Email sent!'
-# except:
-# 	print 'Something went wrong...'
+try:
+	server = smtplib.SMTP_SSL('smtp.gmail.com', 465)
+	server.ehlo()
+	server.login(credentials.username, credentials.password)
+	server.sendmail(FROM, TO, message)
+	server.close()
+	print 'Email sent!'
+except:
+	print 'Something went wrong...'
