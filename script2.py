@@ -9,6 +9,7 @@ import json
 import credentials
 import functions
 import gmail
+import smtplib
 
 page = requests.get("https://www.chittendenhumane.org/Dogs")
 tree = html.fromstring(page.content)
@@ -25,6 +26,7 @@ FROM = credentials.username
 TO = [credentials.username2]
 SUBJECT = 'New Dogs Available At The Chittenden Humane Society!'
 TEXT = ''
+should_send_text = False
 
 with open("criteria.json") as criteria_file:
 	criteria_data = json.load(criteria_file)
@@ -158,9 +160,11 @@ for current_name in current_names:
 with open("dogs_names.txt", "r") as dogs_names_file3:
 	dogs_names3 = dogs_names_file3.readlines()
 
-
-if len(current_names2) > 0:
+print current_names2
+print dogs_names3
+if len(dogs_names3) > len(current_names2):
 	log_text += "Updated file with the following URL's:\n"
+	should_send_text = True
 else:
 	log_text += 'There have not been any new dogs added that meet the specified criteria.\n'
 
@@ -174,32 +178,26 @@ for index, name in enumerate(current_names2):
 log_text += '----------------------------------\n'
 log_text += '\n'
 
+# we always want to write to the log, whether there are new dogs or not
 with open('log.txt', 'a') as file3:
 	file3.write(log_text)
 
-html = functions.build_html(json_string)
-print html
+# send text message
+if should_send_text:
+	TEXT += 'There are new dogs available: https://www.chittendenhumane.org/Dogs'
+	message = """\
+	From: %s
+	To: %s
+	Subject: %s
 
-# send email
-# TEXT += json_string.encode('utf-8').strip()
-TEXT += html.encode('utf-8').strip()
-message = """\
-From: %s
-To: %s
-Subject: %s
-
-%s
-""" % (FROM, ", ".join(TO), SUBJECT, TEXT)
-
-# try:
-# 	server = smtplib.SMTP_SSL('smtp.gmail.com', 465)
-# 	server.ehlo()
-# 	server.login(credentials.username, credentials.password)
-# 	server.sendmail(FROM, TO, message)
-# 	server.close()
-# 	print 'Email sent!'
-# except:
-# 	print 'Something went wrong...'
-
-gm = gmail.Gmail(credentials.username, credentials.password)
-gm.send_message(SUBJECT, message)
+	%s
+	""" % (FROM, ", ".join(TO), SUBJECT, TEXT)
+	try:
+		server = smtplib.SMTP( "smtp.gmail.com", 587 )
+		server.starttls()
+		server.login( credentials.username, credentials.password )
+		server.sendmail( credentials.username, credentials.phone_number, message )
+		server.quit()
+		print 'message sent successfully'
+	except:
+		print 'something went wrong...'
