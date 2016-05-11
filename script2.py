@@ -6,9 +6,9 @@ from datetime import datetime
 import requests
 import urllib2
 import json
-import smtplib
 import credentials
 import functions
+import gmail
 
 page = requests.get("https://www.chittendenhumane.org/Dogs")
 tree = html.fromstring(page.content)
@@ -181,7 +181,8 @@ html = functions.build_html(json_string)
 print html
 
 # send email
-TEXT += json_string.encode('utf-8').strip()
+# TEXT += json_string.encode('utf-8').strip()
+TEXT += html.encode('utf-8').strip()
 message = """\
 From: %s
 To: %s
@@ -190,12 +191,15 @@ Subject: %s
 %s
 """ % (FROM, ", ".join(TO), SUBJECT, TEXT)
 
-try:
-	server = smtplib.SMTP_SSL('smtp.gmail.com', 465)
-	server.ehlo()
-	server.login(credentials.username, credentials.password)
-	server.sendmail(FROM, TO, message)
-	server.close()
-	print 'Email sent!'
-except:
-	print 'Something went wrong...'
+# try:
+# 	server = smtplib.SMTP_SSL('smtp.gmail.com', 465)
+# 	server.ehlo()
+# 	server.login(credentials.username, credentials.password)
+# 	server.sendmail(FROM, TO, message)
+# 	server.close()
+# 	print 'Email sent!'
+# except:
+# 	print 'Something went wrong...'
+
+gm = gmail.Gmail(credentials.username, credentials.password)
+gm.send_message(SUBJECT, message)
